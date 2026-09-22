@@ -1,0 +1,28 @@
+FROM gradle:jdk11-focal
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y git redis-server wget gnupg && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add -
+
+RUN echo "deb [arch=amd64,arm64] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" \
+    | tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+
+RUN apt-get update && \
+    apt-get install -y mongodb-org && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /code
+
+COPY . .
+
+RUN chmod +x gradlew
+RUN chmod +x start.sh
+RUN chmod +x sample-data/load-sample-data.sh
+
+RUN ./gradlew bootJar
+
+CMD ["/code/start.sh"]
